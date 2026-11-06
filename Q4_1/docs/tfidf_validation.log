@@ -1,0 +1,15 @@
+=== NSMC TF-IDF 구현 검증 ===
+데이터: ratings_train.txt (SHA-256: e03b7d14e9e41be8d464a28057cd25d7396c53e67aa7fd5f7e552c59b0ee2940)
+정제 후 리뷰: 145,923개
+검증 표본: 부정 500개 + 긍정 500개, random_state=42
+토큰화: KoNLPy Okt.pos(norm=True, stem=True), 조사 불용어 제거
+TF: 문서 안의 원시 출현 횟수
+IDF: log((1 + N) / (1 + df)) + 1
+정규화: 각 문서 벡터의 L2 길이로 나눔
+scikit-learn 설정: analyzer=str.split, vocabulary=직접 구현 어휘, lowercase=False, use_idf=True, smooth_idf=True, sublinear_tf=False, norm='l2', dtype=float64
+버전: NumPy 2.4.6, scikit-learn 1.9.1
+TF-IDF 행렬 shape: (1000, 3346)
+IDF 최대 오차: 0.000000000000e+00
+행렬 최대 오차: 1.110223024625e-16
+행렬 평균 오차: 4.028125379244e-20
+결과: PASS (허용 오차 1e-06)

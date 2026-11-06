@@ -68,3 +68,40 @@
 한 문장 확인에서는 `이 영화는 재미없다 ㅋㅋ`가 `이/Noun`, `영화/Noun`, `는/Josa`, `재미없다/Adjective`, `ㅋㅋ/KoreanParticle`로 분석되었고, 조사 `는`만 제거되었다. `영화 리뷰 배우 감독`은 모두 유지되며, `그 영화는 평점이 안 좋아서 못 보겠어`에서도 `안`, `못`은 유지된다.
 
 첫 원본 예시 `아 더빙.. 진짜 짜증나네요 목소리`는 `아, 더빙, 진짜, 짜증나다, 목소리`로 분석되었다. 반면 띄어쓰기와 철자가 모두 불안정한 `너무재밓었다그래서보는것을추천한다`는 `너, 무재, 밓었, 다그, 래서, 보다, 추천, 한, 다`처럼 부정확하게 분절됐다. `Okt`를 적용해도 모든 리뷰가 정확히 분석되는 것은 아니다. 구두점과 이모지 제거가 감성 분류에 미치는 영향도 아직 검증하지 않았다.
+
+## 4. TF-IDF 직접 구현과 검증
+
+### 계산 방법
+
+`Q4_1/tfidf_nsmc.py`에서 형태소 토큰의 정렬된 어휘를 만들고 NumPy 행렬에 문서별 원시 출현 횟수(TF)를 기록했다. `df(t)`는 단어 `t`가 한 번 이상 등장한 **문서 수**다. 이후 [scikit-learn 공식 수식](https://scikit-learn.org/stable/modules/feature_extraction.html#tf-idf-term-weighting)에 맞춰 다음을 계산했다.
+
+```text
+TF(t, d) = 문서 d에서 t의 출현 횟수
+IDF(t) = log((1 + N) / (1 + df(t))) + 1
+TF-IDF(t, d) = TF(t, d) × IDF(t)
+최종 벡터 = TF-IDF 문서 벡터 / 해당 벡터의 L2 길이
+```
+
+`N`은 TF-IDF를 학습하는 문서 수다. `+1`을 분자와 분모에 적용하는 것은 `smooth_idf=True`와 일치시키기 위해서다. 반복된 단어의 TF에는 로그를 적용하지 않으며(`sublinear_tf=False`), 각 문서 벡터를 L2 정규화한다. `fit`에서 만든 어휘와 IDF를 `transform`에서도 그대로 사용한다.
+
+### 검증 설정
+
+- 정제된 145,923개 리뷰에서 `random_state=42`로 부정 500개·긍정 500개를 추출했다. NumPy 구현이 **조밀한 행렬**을 사용하므로 전체 14만여 건을 한 번에 벡터화하지 않고, 과제의 최소 500문서 조건을 넘는 1,000개로 계산 검증을 했다.
+- 양쪽에 **같은 Okt 토큰**을 전달했다. scikit-learn에는 `analyzer=str.split`과 직접 만든 어휘를 설정해 기본 토큰 패턴에 의한 한 글자 토큰 누락이나 열 순서 차이를 막았다.
+- scikit-learn 설정: `lowercase=False`, `use_idf=True`, `smooth_idf=True`, `sublinear_tf=False`, `norm='l2'`, `dtype=float64`. [각 옵션의 정의](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html)를 확인하고 직접 구현과 맞췄다.
+- 이 표본에서 IDF를 학습한 것은 **두 구현의 수치 일치 검증용**이다. 이후 분류 실험에서는 학습 데이터에서만 어휘와 IDF를 학습한다.
+
+### 실행 결과
+
+실행: `Q4_1/.venv/bin/python Q4_1/tfidf_nsmc.py` · 원본 로그: [tfidf_validation.log](tfidf_validation.log)
+
+| 항목 | 결과 |
+| --- | ---: |
+| TF-IDF 행렬 크기 | 1,000 × 3,346 |
+| IDF 최대 오차 | 0 |
+| TF-IDF 행렬 최대 오차 | 1.110223024625e-16 |
+| TF-IDF 행렬 평균 오차 | 4.028125379244e-20 |
+| 허용 오차 | 1e-6 |
+| 판정 | **PASS** |
+
+NumPy 2.4.6, scikit-learn 1.9.1에서 확인했다. 이 결과는 **선택한 1,000개 문서와 명시한 설정에서 수치가 일치한다**는 뜻이다. 검색 품질이나 분류 성능은 아직 평가하지 않았다.
