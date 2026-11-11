@@ -12,7 +12,8 @@ from konlpy.tag import Okt
 
 DATA_PATH = Path(__file__).parent / "data" / "ratings_train.txt"
 
-# stopwords-iso 한국어 목록에서 조사 일부만 선택했다.
+# 범용 불용어 목록을 통째로 쓰면 부정어·감성어까지 지울 수 있으므로
+# stopwords-iso 후보 중 빈번한 조사만 선택한다. 영화·배우 같은 도메인어는 유지한다.
 # 같은 글자라도 명사·동사 등으로 분석되면 제거하지 않는다.
 JOSA_STOPWORDS = frozenset(
     {"은", "는", "이", "가", "을", "를", "의", "에", "에서", "에게", "와", "과"}

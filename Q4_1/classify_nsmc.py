@@ -12,7 +12,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from konlpy.tag import Okt
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, confusion_matrix, f1_score
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
 
 from numpy_tfidf import NumpyTfidfVectorizer
@@ -111,6 +118,17 @@ def main() -> None:
         for index, (review, guess) in enumerate(zip(test, predicted))
         if review.label != guess
     ]
+    vocabulary = vectorizer.vocabulary_
+    negation_tokens = {"안", "못", "아니다", "않다", "없다"}
+    indicators = {
+        "학습 어휘 밖 토큰 포함": lambda review: bool(set(review.tokens) - vocabulary.keys()),
+        "토큰 3개 이하": lambda review: len(review.tokens) <= 3,
+        "부정 표현 토큰 포함": lambda review: bool(set(review.tokens) & negation_tokens),
+    }
+    error_reviews = [review for _, review, _ in errors]
+    correct_reviews = [
+        review for review, guess in zip(test, predicted) if review.label == guess
+    ]
     log_lines = [
         "=== NSMC TF-IDF 감성 분류 실험 ===",
         f"데이터: {args.data.name}",
@@ -122,13 +140,27 @@ def main() -> None:
         f"Train 어휘 수: {len(vectorizer.vocabulary_)}개",
         "모델: LogisticRegression(max_iter=1000, random_state=42)",
         f"정확도: {accuracy_score(actual, predicted):.6f}",
+        f"Precision (macro): {precision_score(actual, predicted, average='macro'):.6f}",
+        f"Recall (macro): {recall_score(actual, predicted, average='macro'):.6f}",
         f"F1-Score (macro): {f1_score(actual, predicted, average='macro'):.6f}",
         "혼동 행렬 (행=실제, 열=예측; 순서=0,1):",
         f"  {matrix[0].tolist()}",
         f"  {matrix[1].tolist()}",
         f"오분류: {len(errors)}개",
-        "오분류 예시 5개:",
+        "오류 관련 신호 (서로 중복 가능; 원인으로 확정하지 않음):",
     ]
+    for name, condition in indicators.items():
+        error_count = sum(condition(review) for review in error_reviews)
+        correct_count = sum(condition(review) for review in correct_reviews)
+        error_rate = error_count / len(error_reviews) if error_reviews else 0.0
+        correct_rate = correct_count / len(correct_reviews) if correct_reviews else 0.0
+        log_lines.append(
+            f"  {name}: 오분류 {error_count}/{len(error_reviews)} "
+            f"({error_rate:.1%}), "
+            f"정분류 {correct_count}/{len(correct_reviews)} "
+            f"({correct_rate:.1%})"
+        )
+    log_lines.append("오분류 예시 5개:")
     terms_by_index = {index: term for term, index in vectorizer.vocabulary_.items()}
     for number, (index, review, guess) in enumerate(errors[:5], start=1):
         contributions = test_vectors[index] * model.coef_[0]
