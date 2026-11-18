@@ -1,0 +1,92 @@
+=== 개발 테스트셋 (115문장) ===
+패턴         TP   FP   FN  Precision   Recall      F1
+이메일        22    0    2      1.000    0.917   0.957
+전화         24    0    1      1.000    0.960   0.980
+날짜         28    0    2      1.000    0.933   0.966
+금액         25    0    1      1.000    0.962   0.980
+URL        20    1    2      0.952    0.909   0.930
+전체        119    1    8      0.992    0.937   0.964
+
+[hard 9문장 제외]
+패턴         TP   FP   FN  Precision   Recall      F1
+이메일        22    0    0      1.000    1.000   1.000
+전화         24    0    0      1.000    1.000   1.000
+날짜         28    0    0      1.000    1.000   1.000
+금액         25    0    0      1.000    1.000   1.000
+URL        20    0    0      1.000    1.000   1.000
+전체        119    0    0      1.000    1.000   1.000
+
+--- 실패 사례 8건 ---
+유형별 건수: 표기 미지원 7, 경계 오류 1
+
+[표기 미지원] date-11 (two_digit_year)
+  입력: '24.03.15 출고 예정'
+  정답: 날짜 '24.03.15' → 2024-03-15
+  예측: (없음)
+  메모: 두 자리 연도는 세기를 추정해야 하고 버전 번호와 헷갈린다.
+
+[표기 미지원] date-12 (korean_numerals)
+  입력: '이천이십사년 삼월 십오일에 개최'
+  정답: 날짜 '이천이십사년 삼월 십오일' → 2024-03-15
+  예측: (없음)
+  메모: 숫자를 한글로 읽어 쓴 표기.
+
+[표기 미지원] email-11 (obfuscated)
+  입력: '메일은 user at example dot com 입니다'
+  정답: 이메일 'user at example dot com' → user@example.com
+  예측: (없음)
+  메모: 스팸 회피용 난독화 표기. @와 .이 없어 기본 패턴으로는 잡히지 않는다.
+
+[표기 미지원] email-12 (fullwidth_at)
+  입력: '문의 user＠example.com'
+  정답: 이메일 'user＠example.com' → user@example.com
+  예측: (없음)
+  메모: 전각 ＠ 문자. 유니코드 정규화(NFKC) 없이는 놓친다.
+
+[표기 미지원] money-12 (korean_numerals)
+  입력: '삼만원만 내시면 됩니다'
+  정답: 금액 '삼만원' → 30000 KRW
+  예측: (없음)
+  메모: 숫자를 한글로 읽어 쓴 표기. 뒤의 '만'은 보조사다.
+
+[표기 미지원] phone-12 (korean_numerals)
+  입력: '연락처는 공일공-일이삼사-오육칠팔입니다'
+  정답: 전화 '공일공-일이삼사-오육칠팔' → 010-1234-5678
+  예측: (없음)
+  메모: 숫자를 한글로 읽어 쓴 표기. 숫자 기반 패턴으로는 잡히지 않는다.
+
+[표기 미지원] url-11 (bare_domain)
+  입력: 'example.com/event 페이지 참고'
+  정답: URL 'example.com/event' → https://example.com/event
+  예측: (없음)
+  메모: 스킴도 www도 없어 파일명·버전 표기와 구분하기 어렵다.
+
+[경계 오류] url-12 (korean_path)
+  입력: 'https://ko.wikipedia.org/wiki/정규_표현식 문서'
+  정답: URL 'https://ko.wikipedia.org/wiki/정규_표현식' → https://ko.wikipedia.org/wiki/정규_표현식
+  예측: URL 'https://ko.wikipedia.org/wiki/' → https://ko.wikipedia.org/wiki/
+  메모: 경로에 한글이 있어 ASCII 문자 집합만 허용하면 중간에 잘린다.
+
+=== 홀드아웃 (패턴을 보지 않고 작성) (40문장) ===
+패턴         TP   FP   FN  Precision   Recall      F1
+이메일         9    0    0      1.000    1.000   1.000
+전화          9    0    1      1.000    0.900   0.947
+날짜          9    0    0      1.000    1.000   1.000
+금액         10    0    0      1.000    1.000   1.000
+URL         7    0    1      1.000    0.875   0.933
+전체         44    0    2      1.000    0.957   0.978
+
+--- 실패 사례 2건 ---
+유형별 건수: 표기 미지원 2
+
+[표기 미지원] holdout-phone-05 (paren_area_code)
+  입력: '본사 031-123-4567, 지점 02)987-6543 입니다.'
+  정답: 전화 '02)987-6543' → 02-987-6543
+  예측: (없음)
+  메모: paren separator unsure
+
+[표기 미지원] holdout-url-05 (bare_domain_path)
+  입력: '문의는 example.com/help 로 남겨주세요.'
+  정답: URL 'example.com/help' → https://example.com/help
+  예측: (없음)
+  메모: bare domain without www

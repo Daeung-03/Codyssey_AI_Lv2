@@ -42,6 +42,7 @@ Q4_2/
 ├── compare_tfidf.py           # [보너스] 규칙 vs TF-IDF
 ├── data/
 │   ├── extraction_testset.jsonl   # 생성기 출력 (Git 포함)
+│   ├── extraction_holdout.jsonl   # 패턴을 보지 않고 작성한 평가 문장 (Git 포함)
 │   ├── sentiment_lexicon.tsv      # 범용 감성 사전 (Git 포함)
 │   ├── domain_lexicon.tsv         # 도메인 특화 단어 30개+ (Git 포함)
 │   ├── aspect_testset.jsonl       # [보너스] Aspect 정답 (Git 포함)
@@ -200,7 +201,7 @@ python main.py --text '...' --aspect    # 측면별 감성 함께 출력
 | --- | --- | --- | --- | --- |
 | 1 | 아키텍처 설계 + 테스트 문장 생성기 | `PLAN.md`, `entities.py`, `extraction_testset.py`, `data/extraction_testset.jsonl` | 115문장 생성, 검증 통과 | ✅ |
 | 2 | 정규식 패턴 + 추출·정규화 | `patterns.py`, `extractor.py` | 필수 5패턴, 패턴별 3변형+, 모든 패턴에 주석 | ✅ |
-| 3 | 정보 추출 평가 | `evaluate_extraction.py`, `docs/extraction_eval.log` | 패턴별 P/R, 실패 사례 5건+ 유형 분류 | ⬜ |
+| 3 | 정보 추출 평가 | `evaluate_extraction.py`, `data/extraction_holdout.jsonl`, `docs/extraction_eval.log` | 패턴별 P/R, 실패 사례 5건+ 유형 분류 | ✅ |
 | 4 | NSMC 데이터 준비 + 감성 사전 구축 | `nsmc_data.py`, `lexicon.py`, `data/*_lexicon.tsv` | 사전 200개+, 도메인어 30개+, 출처 명시 | ⬜ |
 | 5 | 감성 분석기 | `sentiment.py` | 부정어·강조어·이중부정 단일 패턴, trace 출력 | ⬜ |
 | 6 | 감성 분석 평가 | `evaluate_sentiment.py`, `docs/sentiment_eval.log` | Acc/F1, 규칙 전후 비교, 오분류 10건+ 분석 | ⬜ |
