@@ -1,0 +1,60 @@
+word	score	pos	note
+강추	2	Noun	강력 추천
+걸작	2	Noun	
+꿀잼	2	Noun	재미있다는 신조어
+만점	2	Noun	후보 풀 부정 8 vs 긍정 50
+명연기	2	Noun	
+명작	2	Noun	
+빠져들다	2	Verb	후보 풀 부정 3 vs 긍정 37
+수작	2	Noun	
+여운	2	Noun	영화의 여운
+열연	2	Noun	
+존잼	2	Noun	
+짱	2	Noun	
+최고다	2	Noun	Okt가 '최고다'를 명사 하나로 분석
+핵잼	2	Noun	
+호연	2	Noun	
+흥미진진	2	Noun	
+ㅎㅎ	1	KoreanParticle	
+ㅠㅠ	1	KoreanParticle	감동 맥락 (후보 풀 긍정 213 vs 부정 86)
+굳다	1	Adjective	'굳'(good), 후보 풀 부정 3 vs 긍정 33 예문: 굳 굳
+굿	1	Noun	
+꼭	1	Noun	'꼭 보세요', 후보 풀 부정 30 vs 긍정 192
+눈물	1	Noun	감동 맥락 (후보 풀 긍정 156 vs 부정 26)
+대박	1	Noun	
+몰입도	1	Noun	
+소름	1	Noun	'소름 돋는 연기' 등 호평
+슬프다	1	Adjective	영화 리뷰에서는 감동 맥락이 많음 (후보 풀 긍정 147 vs 부정 23)
+인생	1	Noun	'인생 영화', 후보 풀 부정 46 vs 긍정 135
+쩔다	1	Verb	
+화이팅	1	Noun	후보 풀 부정 3 vs 긍정 31
+ㅉㅉ	-1	KoreanParticle	혀 차는 소리
+ㅡㅡ	-1	KoreanParticle	불만 표정
+개연	-1	Noun	부정 결합어 ('개연성 없다')
+그나마	-1	Adverb	후보 풀 부정 44 vs 긍정 5
+그닥	-1	Noun	부정 결합어, 후보 풀 부정 31 vs 긍정 1
+도저히	-1	Noun	부정 결합어, 후보 풀 부정 40 vs 긍정 1
+막장	-1	Noun	
+병맛	-1	Noun	
+신파	-1	Noun	억지 감동 비판
+오그라들다	-1	Verb	
+욕	-1	Noun	후보 풀 부정 98 vs 긍정 21
+이하	-1	Noun	'기대 이하', 후보 풀 부정 29 vs 긍정 5
+재탕	-1	Noun	
+전형	-1	Noun	'전형적인', 후보 풀 부정 37 vs 긍정 5
+질질	-1	Noun	'질질 끌다', 후보 풀 부정 41 vs 긍정 7
+차라리	-1	Noun	후보 풀 부정 96 vs 긍정 11
+클리셰	-1	Noun	
+휴	-1	Exclamation	후보 풀 부정 53 vs 긍정 6
+너무하다	-2	Adjective	후보 풀 부정 35 vs 긍정 4
+노잼	-2	Noun	재미없다는 신조어
+망작	-2	Noun	
+망하다	-2	Adjective	후보 풀 부정 47 vs 긍정 11
+반개	-2	Noun	'별 반개도 아깝다'
+발연기	-2	Noun	연기를 못한다는 비하어
+비추다	-2	Verb	'비추'(비추천)를 Okt가 비추다로 원형화
+삼류	-2	Noun	
+알바	-2	Noun	'평점 알바' 의심 표현
+어이	-2	Noun	부정 결합어 ('어이 없다'), 후보 풀 부정 45 vs 긍정 2
+이딴	-2	Modifier	후보 풀 부정 70 vs 긍정 3
+졸작	-2	Noun	

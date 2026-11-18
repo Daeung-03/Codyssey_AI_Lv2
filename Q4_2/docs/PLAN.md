@@ -158,7 +158,7 @@ def format_trace(result) -> str                       # PROBLEM.md 예시 형식
 1. **토큰화**: Q4_1과 같이 Okt `pos(norm=True, stem=True)`
 2. **사전 점수**: 감성어 토큰마다 기본 점수
 3. **강조어**: 감성어 앞 2토큰 안의 강조어 배율을 곱함
-4. **부정어 반전**: 감성어 앞 `안/못`, 뒤 같은 절 안의 `않다/없다/아니다` → ×(-1)
+4. **부정어 반전**: 뒤 부정어 `않다/없다/아니다/못하다`는 앞 2토큰 안의 감성어를, 앞 부정어 `안/못`은 바로 다음 말(또는 `명사 + 못 하다`의 명사)을 ×(-1). `별로·어이` 같은 부정 결합어는 반전하지 않음
 5. **이중부정 단일 패턴**: `-지 않을 수 없다`, `-지 않은 것은 아니다` 형태를 하나의 패턴으로 인식 → 반전 두 번(원 극성 유지)
 6. **판정**: `score > 0` 긍정, `< 0` 부정, `= 0`(사전 미적중)은 train 다수 레이블로 두고 비율을 따로 보고
 
@@ -202,9 +202,9 @@ python main.py --text '...' --aspect    # 측면별 감성 함께 출력
 | 1 | 아키텍처 설계 + 테스트 문장 생성기 | `PLAN.md`, `entities.py`, `extraction_testset.py`, `data/extraction_testset.jsonl` | 115문장 생성, 검증 통과 | ✅ |
 | 2 | 정규식 패턴 + 추출·정규화 | `patterns.py`, `extractor.py` | 필수 5패턴, 패턴별 3변형+, 모든 패턴에 주석 | ✅ |
 | 3 | 정보 추출 평가 | `evaluate_extraction.py`, `data/extraction_holdout.jsonl`, `docs/extraction_eval.log` | 패턴별 P/R, 실패 사례 5건+ 유형 분류 | ✅ |
-| 4 | NSMC 데이터 준비 + 감성 사전 구축 | `nsmc_data.py`, `lexicon.py`, `data/*_lexicon.tsv` | 사전 200개+, 도메인어 30개+, 출처 명시 | ⬜ |
-| 5 | 감성 분석기 | `sentiment.py` | 부정어·강조어·이중부정 단일 패턴, trace 출력 | ⬜ |
-| 6 | 감성 분석 평가 | `evaluate_sentiment.py`, `docs/sentiment_eval.log` | Acc/F1, 규칙 전후 비교, 오분류 10건+ 분석 | ⬜ |
+| 4 | NSMC 데이터 준비 + 감성 사전 구축 | `nsmc_data.py`, `lexicon.py`, `data/*_lexicon.tsv` | 사전 200개+, 도메인어 30개+, 출처 명시 | ✅ |
+| 5 | 감성 분석기 | `sentiment.py` | 부정어·강조어·이중부정 단일 패턴, trace 출력 | ✅ |
+| 6 | 감성 분석 평가 | `evaluate_sentiment.py`, `docs/sentiment_eval.log` | Acc/F1, 규칙 전후 비교, 오분류 10건+ 분석 | ✅ |
 | 7 | [보너스] 개인정보 마스킹 | `patterns.py` 확장, `masking.py` | 주민번호·카드·주소 추출 + 마스킹, PII 문장 평가 | ⬜ |
 | 8 | [보너스] 규칙 vs TF-IDF | `compare_tfidf.py`, 로그·그래프 | 10/100/1000 학습 크기별 비교 | ⬜ |
 | 9 | [보너스] Aspect 감성 분석 | `aspect.py`, `data/aspect_testset.jsonl` | 측면별 극성 출력 + 정확도 | ⬜ |
