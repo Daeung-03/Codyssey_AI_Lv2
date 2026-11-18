@@ -24,6 +24,17 @@ PII_TYPES = (RRN, CARD, ADDRESS)
 ENTITY_TYPES = CORE_TYPES + PII_TYPES
 CURRENCIES = ("KRW", "USD")
 
+KIND_LABELS = {
+    EMAIL: "이메일",
+    PHONE: "전화",
+    DATE: "날짜",
+    MONEY: "금액",
+    URL: "URL",
+    RRN: "주민번호",
+    CARD: "카드번호",
+    ADDRESS: "주소",
+}
+
 
 @dataclass(frozen=True)
 class Entity:

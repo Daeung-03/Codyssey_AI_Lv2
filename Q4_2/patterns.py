@@ -1,0 +1,304 @@
+"""정보 추출용 정규표현식 모음.
+
+모든 패턴은 `re.VERBOSE`로 작성해 줄마다 의도를 주석으로 남긴다.
+(VERBOSE 모드에서는 문자 클래스 밖의 공백과 `#` 뒤 내용이 무시되므로, 공백 자체를 찾을 때는
+ `[ ]`·`\\s`처럼 명시한다. 문자 클래스 `[...]` 안의 공백과 `#`은 글자 그대로 쓰인다.)
+
+자주 쓰는 문법
+- 메타문자: `.`(임의 문자), `\\d`(숫자), `\\s`(공백), `[...]`(문자 클래스), `|`(또는)
+- 수량자: `?`(0~1), `*`(0+), `+`(1+), `{m,n}`(m~n회). 기본은 탐욕적(가능한 길게)이다.
+- 그룹: `(?:...)` 묶기만, `(?P<name>...)` 이름 있는 캡처 → 정규화 단계에서 `match.group("name")`로 읽는다.
+- 역참조: `(?P=name)` 앞에서 캡처한 것과 같은 문자열 (예: 같은 구분자 반복)
+- 조건: `(?(name)A|B)` name 그룹이 잡혔으면 A, 아니면 B
+- 전후방 탐색: `(?<!...)`, `(?!...)` — 글자를 소비하지 않고 경계만 검사한다.
+
+한국어 문장에서는 `\\b`가 기대대로 동작하지 않는다. 파이썬 `re`는 한글도 단어 문자(`\\w`)로 보므로
+`test@a.co.kr입니다`에서 `kr`과 `입` 사이에 단어 경계가 없다. 그래서 경계는 ASCII 문자 집합을
+명시한 전후방 탐색으로 처리한다.
+
+정규식은 "후보"만 찾는다. 날짜 유효성(2월 30일 등)과 값 변환은 extractor.py의 정규화 단계가 맡는다.
+"""
+
+import re
+from dataclasses import dataclass
+
+from entities import DATE, EMAIL, MONEY, PHONE, URL
+
+
+@dataclass(frozen=True)
+class PatternRule:
+    kind: str  # 추출할 정보 유형
+    name: str  # 규칙 이름 (같은 유형의 여러 표기를 구분)
+    regex: re.Pattern
+    unit: str | None = None  # 금액 규칙의 통화
+
+
+# ---------------------------------------------------------------------------
+# 이메일
+# 매칭: user@domain.com, test.user@sub.domain.co.kr, alerts+billing@example.com,
+#       John.Doe@Example.COM, <noreply@x.example.net>, help@example.com. (끝 마침표 제외)
+# 제외: @멘션(로컬 파트 없음), a@b(최상위 도메인 없음), 난독화(user at example dot com),
+#       전각 ＠, 한글 도메인
+# ---------------------------------------------------------------------------
+EMAIL_PATTERN = re.compile(
+    r"""
+    (?<![A-Za-z0-9._%+\-])                  # 로컬 파트 중간에서 시작하지 않는다
+    (?P<local>[A-Za-z0-9._%+\-]+)           # 로컬 파트: 영문·숫자와 . _ % + -
+    @
+    (?P<domain>
+        (?:[A-Za-z0-9]                      # 도메인 라벨은 영문·숫자로 시작하고
+           (?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?  # 하이픈은 가운데에만 올 수 있으며
+        \.)+                                # 점으로 끝나는 라벨이 1개 이상
+        [A-Za-z]{2,}                        # 최상위 도메인: 영문 2자 이상 (com, kr, net …)
+    )
+    (?![A-Za-z0-9\-]|\.[A-Za-z0-9])         # 도메인이 더 이어지지 않는다 (끝 마침표·한글 조사는 허용)
+    """,
+    re.VERBOSE,
+)
+
+
+# ---------------------------------------------------------------------------
+# 전화번호
+# 공통 경계: 앞에 숫자·점·하이픈·+가 없고 뒤에 숫자(또는 -숫자)가 없다.
+#            → 카드번호 1234-5678-9012-3456 안의 '5678-9012'나 날짜 '2024-02-30'의 '02-30'을 막는다.
+# ---------------------------------------------------------------------------
+
+# 국내 표기
+# 매칭: 010-1234-5678, 02-123-4567, 031-1234-5678, 070-4321-8765,
+#       01098765432(구분자 없음), 010.2345.6789, 010 3456 7890, (02)987-6543
+# 제외: 한글 숫자(공일공-…), 구분자가 섞인 표기(010-1234 5678)
+PHONE_DOMESTIC_PATTERN = re.compile(
+    r"""
+    (?<![\d.\-+])
+    (?:
+        \( (?P<paren_area>0(?:2|[3-6][1-5]|70|1[016789])) \) [ ]?   # (02)처럼 괄호로 감싼 지역번호
+      |
+        (?P<area>
+            01[016789]                      # 휴대폰 010·011·016~019
+          | 02                              # 서울
+          | 0[3-6][1-5]                     # 경기·강원·충청·경상·전라 등 지역번호 031~064
+          | 070                             # 인터넷 전화
+        )
+        (?P<sep>[-. ]?)                     # 구분자: 하이픈·점·공백 또는 없음
+    )
+    (?P<mid>\d{3,4})                        # 국번 3~4자리
+    (?(paren_area)[-. ]?|(?P=sep))          # 괄호 표기면 아무 구분자, 아니면 앞과 같은 구분자
+    (?P<last>\d{4})                         # 가입자 번호 4자리
+    (?!\d|-\d)
+    """,
+    re.VERBOSE,
+)
+
+# 국제 표기 (+82)
+# 매칭: +82-10-1234-5678, +82 2 123 4567, +821056781234 → 맨 앞 0을 떼고 쓴 국내 번호
+PHONE_INTERNATIONAL_PATTERN = re.compile(
+    r"""
+    (?<![\d+])
+    \+82[-. ]?                              # 대한민국 국가번호
+    (?P<area>1[016789]|2|[3-6][1-5]|70)     # 0을 뺀 지역·휴대폰 번호
+    (?P<sep>[-. ]?)
+    (?P<mid>\d{3,4})
+    (?P=sep)                                # 앞과 같은 구분자
+    (?P<last>\d{4})
+    (?!\d|-\d)
+    """,
+    re.VERBOSE,
+)
+
+# 전국 대표번호
+# 매칭: 1588-1234, 1577-0000, 1644-…, 1800-…  (15xx·16xx·18xx 네 자리 + 네 자리)
+# 제외: 하이픈 없는 1588 (인원·건수 숫자와 구분할 수 없음),
+#       1998-2024 같은 연도 범위 (실제 대표번호에 없는 17xx·19xx 앞자리는 받지 않는다)
+PHONE_REPRESENTATIVE_PATTERN = re.compile(
+    r"""
+    (?<![\d.\-])
+    (?P<rep>1[568]\d{2})                    # 대표번호 앞자리 15xx·16xx·18xx
+    -                                       # 하이픈 필수
+    (?P<last>\d{4})
+    (?!\d|-\d)
+    """,
+    re.VERBOSE,
+)
+
+
+# ---------------------------------------------------------------------------
+# 날짜
+# 정규식으로는 숫자 범위만 대략 거르고, 달력상 유효성은 정규화 단계에서 datetime으로 확인한다.
+# ---------------------------------------------------------------------------
+
+# 한국어 연-월(-일)
+# 매칭: 2024년 3월 15일, 2023년 12월 1일, 2024년3월15일, 2024년 5월(일 없음)
+# 제외: 2024년(연도만), 이천이십사년(한글 숫자)
+DATE_KOREAN_PATTERN = re.compile(
+    r"""
+    (?<!\d)
+    (?P<year>\d{4}) \s* 년 \s*              # 네 자리 연도 + '년'
+    (?P<month>\d{1,2}) \s* 월               # 월 1~2자리
+    (?: \s* (?P<day>\d{1,2}) \s* 일 )?      # 일은 선택 → 없으면 YYYY-MM
+    """,
+    re.VERBOSE,
+)
+
+# 한국어 월-일 (연도 없음)
+# 매칭: 3월 15일, 12월25일 → --MM-DD
+# 제외: 3개월 2일 (앞에 '개'가 있어 \d 바로 뒤 '월'이 아님)
+DATE_KOREAN_MONTH_DAY_PATTERN = re.compile(
+    r"""
+    (?<!\d)
+    (?P<month>\d{1,2}) \s* 월 \s*
+    (?P<day>\d{1,2}) \s* 일
+    """,
+    re.VERBOSE,
+)
+
+# 숫자 + 구분자
+# 매칭: 2024/03/15, 2024-03-15, 2024.01.05, 2024. 1. 5., 2025.1.2
+# 제외: 버전 2.10.3, IP 192.168.0.1(연도가 19xx·20xx 네 자리가 아님), 24.03.15(두 자리 연도),
+#       20240315-0001(구분자 없음), 2024-03/15(구분자 불일치)
+DATE_NUMERIC_PATTERN = re.compile(
+    r"""
+    (?<![\d.\-/])
+    (?P<year>(?:19|20)\d{2})                # 1900~2099년
+    \s* (?P<sep>[-/.]) \s*                  # 구분자 - / . (점 뒤 공백 허용: '2024. 1. 5.')
+    (?P<month>\d{1,2})
+    \s* (?P=sep) \s*                        # 연-월과 같은 구분자
+    (?P<day>\d{1,2})
+    (?!\d|[-/.]\d)                          # 뒤에 숫자 묶음이 더 이어지지 않는다
+    """,
+    re.VERBOSE,
+)
+
+# 영문 월 이름: 약어(Jan)와 전체(January) 모두, 대소문자 무시
+_MONTH_NAME = r"""
+    (?P<month_name>
+        Jan(?:uary)? | Feb(?:ruary)? | Mar(?:ch)? | Apr(?:il)? | May | June? | July? |
+        Aug(?:ust)? | Sep(?:t(?:ember)?)? | Oct(?:ober)? | Nov(?:ember)? | Dec(?:ember)?
+    )
+"""
+
+# 영문 월-일-연
+# 매칭: March 5, 2024 / Mar. 5 2024 / March 5th, 2024
+DATE_ENGLISH_MDY_PATTERN = re.compile(
+    r"(?<![A-Za-z])"                        # 단어 중간에서 시작하지 않는다
+    + _MONTH_NAME
+    + r"""
+    \.? \s+                                 # 약어 뒤 마침표 선택
+    (?P<day>\d{1,2}) (?:st|nd|rd|th)?       # 서수 접미사 선택
+    ,? \s+
+    (?P<year>\d{4})
+    (?!\d)
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+# 영문 일-월-연
+# 매칭: 15 Jan 2024 / 1st March, 2024
+DATE_ENGLISH_DMY_PATTERN = re.compile(
+    r"""
+    (?<![\d.])
+    (?P<day>\d{1,2}) (?:st|nd|rd|th)? \s+
+    """
+    + _MONTH_NAME
+    + r"""
+    \.? ,? \s+
+    (?P<year>\d{4})
+    (?!\d)
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
+# ---------------------------------------------------------------------------
+# 금액
+# 숫자 표기: 쉼표 세 자리 묶음(1,250,000) 또는 연속 숫자(3000)
+# 한국어 단위: 십·백·천 + 만·억·조 조합 (천만, 백만 …) 또는 단독
+# ---------------------------------------------------------------------------
+_NUMBER = r"(?:\d{1,3}(?:,\d{3})+|\d+)"
+_KOREAN_UNIT = r"(?:[십백천]?[만억조]|[십백천])"
+
+# '숫자 (단위 숫자?)*' 형태의 금액 본문. 예: 10,000 / 5만 / 1억 2천만 / 1만 5천 / 500 만
+_AMOUNT_BODY = (
+    r"(?P<body>"
+    + _NUMBER                               # 첫 숫자
+    + r"(?:\s*" + _KOREAN_UNIT              # 단위
+    + r"(?:\s*" + _NUMBER + r")?)*"         # 단위 뒤에 오는 다음 숫자(선택), 반복
+    + r")"
+)
+
+# 원화 단위 표기
+# 매칭: 10,000원, 3000원, 5만원, 1만 5천원, 1억 2천만원, 2억원, 500 만원, 10,000 원
+# 제외: 삼만원(한글 숫자), 천원(숫자 없음), 100명·3,000석(단위가 원이 아님)
+MONEY_KRW_PATTERN = re.compile(
+    r"(?<![\d,.])"                          # 다른 숫자 중간에서 시작하지 않는다
+    + _AMOUNT_BODY
+    + r"\s*원",                             # 끝은 반드시 '원'
+)
+
+# 원화 기호
+# 매칭: ₩25,000, ₩ 3000
+MONEY_KRW_SYMBOL_PATTERN = re.compile(
+    r"""
+    ₩ \s?                                   # 원화 기호
+    (?P<body>\d{1,3}(?:,\d{3})+|\d+)        # 숫자
+    (?![\d,]|\.\d)                          # 소수 금액은 지원하지 않는다
+    """,
+    re.VERBOSE,
+)
+
+# 달러 기호·통화 코드
+# 매칭: $100, $ 1,500, USD 1,200, US$20
+# 제외: $12.50 (소수: 정수 정규화 규격 밖이라 의도적으로 잡지 않는다)
+MONEY_USD_SYMBOL_PATTERN = re.compile(
+    r"""
+    (?:\$|USD[ ]?|US\$)                     # 달러 기호 또는 통화 코드
+    \s?
+    (?P<body>\d{1,3}(?:,\d{3})+|\d+)
+    (?![\d,]|\.\d)
+    """,
+    re.VERBOSE,
+)
+
+# 달러 단어
+# 매칭: 9달러, 100만 달러
+MONEY_USD_WORD_PATTERN = re.compile(
+    r"(?<![\d,.])" + _AMOUNT_BODY + r"\s*달러",
+)
+
+
+# ---------------------------------------------------------------------------
+# URL
+# RFC 3986에서 URL에 그대로 쓸 수 있는 ASCII 문자만 허용한다. 한글은 퍼센트 인코딩되어야 하므로
+# 'https://…/item/123에서'의 '에서'를 URL에서 떼어낼 수 있다. 대신 한글 경로는 중간에 잘린다(의도된 한계).
+# 괄호 ( )도 허용 문자지만, 문장 속 괄호로 감싼 URL이 훨씬 흔해 제외했다.
+# 매칭: https://www.example.com/path?query=value, http://localhost:8080/api#top,
+#       www.example.co.kr(스킴 없음), HTTPS://WWW.EXAMPLE.COM/Docs, <https://…>
+# 제외: example.com/event(스킴·www 모두 없음), report.final.pdf, 한글 도메인·경로
+# ---------------------------------------------------------------------------
+_URL_CHAR = r"[A-Za-z0-9\-._~:/?#\[\]@!$&'*+,;=%]"   # URL 안에 올 수 있는 문자
+_URL_LAST_CHAR = r"[A-Za-z0-9\-_~/#@$&*+=%]"          # 마지막 문자: 문장부호 . , ; : ! ? ' 제외
+
+URL_PATTERN = re.compile(
+    r"(?<![A-Za-z0-9@./])"                  # 이메일·다른 URL 중간에서 시작하지 않는다
+    + r"(?:(?P<scheme>https?)://|(?=www\.))"  # http(s):// 로 시작하거나, 스킴 없이 www. 로 시작
+    + r"(?P<rest>" + _URL_CHAR + r"*" + _URL_LAST_CHAR + r")",  # 끝 문장부호는 탐욕 매칭 후 되돌려 제외
+    re.IGNORECASE,
+)
+
+
+# 추출기가 순서대로 실행할 규칙 목록. 같은 유형 안에서도 표기별로 규칙을 나눠 실패 원인을 추적하기 쉽게 한다.
+RULES: tuple[PatternRule, ...] = (
+    PatternRule(EMAIL, "email", EMAIL_PATTERN),
+    PatternRule(PHONE, "phone_domestic", PHONE_DOMESTIC_PATTERN),
+    PatternRule(PHONE, "phone_international", PHONE_INTERNATIONAL_PATTERN),
+    PatternRule(PHONE, "phone_representative", PHONE_REPRESENTATIVE_PATTERN),
+    PatternRule(DATE, "date_korean", DATE_KOREAN_PATTERN),
+    PatternRule(DATE, "date_korean_month_day", DATE_KOREAN_MONTH_DAY_PATTERN),
+    PatternRule(DATE, "date_numeric", DATE_NUMERIC_PATTERN),
+    PatternRule(DATE, "date_english_mdy", DATE_ENGLISH_MDY_PATTERN),
+    PatternRule(DATE, "date_english_dmy", DATE_ENGLISH_DMY_PATTERN),
+    PatternRule(MONEY, "money_krw", MONEY_KRW_PATTERN, "KRW"),
+    PatternRule(MONEY, "money_krw_symbol", MONEY_KRW_SYMBOL_PATTERN, "KRW"),
+    PatternRule(MONEY, "money_usd_symbol", MONEY_USD_SYMBOL_PATTERN, "USD"),
+    PatternRule(MONEY, "money_usd_word", MONEY_USD_WORD_PATTERN, "USD"),
+    PatternRule(URL, "url", URL_PATTERN),
+)

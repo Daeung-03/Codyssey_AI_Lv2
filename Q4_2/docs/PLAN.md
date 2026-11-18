@@ -97,7 +97,7 @@ extract(text: str, kinds: Iterable[str] = CORE_TYPES) -> list[Entity]   # span �
 normalize_email / normalize_phone / normalize_date / normalize_money / normalize_url
 ```
 
-- **겹침 해소**: 모든 패턴의 후보를 모은 뒤 `우선순위(url > email > rrn > card > phone > date > money)` → `긴 매칭 우선` 순으로 겹치는 후보를 버린다. (URL 안의 날짜, 카드번호 안의 전화번호 오탐 방지)
+- **겹침 해소**: 모든 패턴의 후보를 모은 뒤 `긴 매칭 우선` → 길이가 같으면 `우선순위(url > email > rrn > card > phone > date > money > address)` 순으로 겹치는 후보를 버린다. (URL 안의 날짜, 카드번호 안의 전화번호 오탐 방지)
 - **검증 후 탈락**: 정규식으로 잡은 후 `datetime.date()`로 날짜 유효성을, 전화 자릿수를 다시 확인해 정밀도를 올린다.
 
 #### 정규화 규격 (생성기 정답과 반드시 동일)
@@ -199,7 +199,7 @@ python main.py --text '...' --aspect    # 측면별 감성 함께 출력
 | # | 작업 | 산출물 | 완료 조건 | 상태 |
 | --- | --- | --- | --- | --- |
 | 1 | 아키텍처 설계 + 테스트 문장 생성기 | `PLAN.md`, `entities.py`, `extraction_testset.py`, `data/extraction_testset.jsonl` | 115문장 생성, 검증 통과 | ✅ |
-| 2 | 정규식 패턴 + 추출·정규화 | `patterns.py`, `extractor.py` | 필수 5패턴, 패턴별 3변형+, 모든 패턴에 주석 | ⬜ |
+| 2 | 정규식 패턴 + 추출·정규화 | `patterns.py`, `extractor.py` | 필수 5패턴, 패턴별 3변형+, 모든 패턴에 주석 | ✅ |
 | 3 | 정보 추출 평가 | `evaluate_extraction.py`, `docs/extraction_eval.log` | 패턴별 P/R, 실패 사례 5건+ 유형 분류 | ⬜ |
 | 4 | NSMC 데이터 준비 + 감성 사전 구축 | `nsmc_data.py`, `lexicon.py`, `data/*_lexicon.tsv` | 사전 200개+, 도메인어 30개+, 출처 명시 | ⬜ |
 | 5 | 감성 분석기 | `sentiment.py` | 부정어·강조어·이중부정 단일 패턴, trace 출력 | ⬜ |
