@@ -16,13 +16,15 @@ from collections import Counter
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from entities import CORE_TYPES, KIND_LABELS, Entity
+from entities import CORE_TYPES, ENTITY_TYPES, KIND_LABELS, PII_TYPES, Entity
 from extraction_testset import OUTPUT_PATH as TESTSET_PATH
 from extraction_testset import ExtractionCase, load_cases
 from extractor import extract, find_candidates, format_value
+from masking import MASK_KINDS, mask, mask_value
 
 
 HOLDOUT_PATH = Path(__file__).parent / "data" / "extraction_holdout.jsonl"
+PII_HOLDOUT_PATH = Path(__file__).parent / "data" / "pii_holdout.jsonl"
 LOG_PATH = Path(__file__).parent / "docs" / "extraction_eval.log"
 
 FAILURE_LABELS = {
@@ -167,14 +169,59 @@ def report_section(title: str, cases: list[ExtractionCase]) -> str:
     return "\n".join(parts)
 
 
+def pii_section(title: str, cases: list[ExtractionCase]) -> str:
+    """개인정보 패턴까지 모두 켠 상태의 점수. 개인정보 유형이 관련된 실패만 보여 준다."""
+    counts, failures = evaluate(cases, ENTITY_TYPES)
+    core_only, _ = evaluate(cases, CORE_TYPES)
+    changed = [KIND_LABELS[k] for k in CORE_TYPES if counts[k] != core_only[k]]
+    pii_failures = [
+        f for f in failures
+        if (f.gold and f.gold.kind in PII_TYPES) or (f.pred and f.pred.kind in PII_TYPES)
+    ]
+    return "\n".join([
+        f"=== {title} ({len(cases)}문장, 8개 유형 모두 추출) ===",
+        score_table(counts),
+        "개인정보 패턴을 켠 뒤 핵심 5패턴 점수 변화: " + (", ".join(changed) if changed else "없음"),
+        f"\n--- 개인정보 관련 실패 {len(pii_failures)}건 ---\n" + (failure_report(pii_failures) if pii_failures else "없음"),
+    ])
+
+
+def masking_section(cases: list[ExtractionCase]) -> str:
+    """가려야 할 정답이 마스킹 뒤에도 원문 그대로 남았는지(누출), 정답 없는 문장을 건드렸는지(과잉) 센다."""
+    to_mask = leaked = over = 0
+    lines = []
+    for case in cases:
+        masked, _ = mask(case.text)
+        for gold in case.entities:
+            if gold.kind in MASK_KINDS and mask_value(gold) is not None:
+                to_mask += 1
+                if gold.raw in masked:
+                    leaked += 1
+                    lines.append(f"  누출 {case.case_id}: {KIND_LABELS[gold.kind]} {gold.raw!r} → {masked!r}")
+        if not case.entities and masked != case.text:
+            over += 1
+            lines.append(f"  과잉 {case.case_id}: {case.text!r} → {masked!r}")
+    header = (f"=== 마스킹 ({len(cases)}문장) ===\n"
+              f"가려야 할 정보 {to_mask}개 중 누출 {leaked}개, 정답 없는 문장을 바꾼 경우 {over}개")
+    return "\n".join([header] + lines)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="정보 추출 성능(패턴별 P/R)과 실패 사례를 기록한다.")
     parser.add_argument("--log", type=Path, default=LOG_PATH, help="결과를 저장할 로그 경로")
     args = parser.parse_args()
 
-    sections = [report_section("개발 테스트셋", load_cases(TESTSET_PATH))]
-    if HOLDOUT_PATH.exists():
-        sections.append(report_section("홀드아웃 (패턴을 보지 않고 작성)", load_cases(HOLDOUT_PATH)))
+    dev = load_cases(TESTSET_PATH)
+    holdout = load_cases(HOLDOUT_PATH) if HOLDOUT_PATH.exists() else []
+    pii_holdout = load_cases(PII_HOLDOUT_PATH) if PII_HOLDOUT_PATH.exists() else []
+
+    sections = [report_section("개발 테스트셋", dev)]
+    if holdout:
+        sections.append(report_section("홀드아웃 (패턴을 보지 않고 작성)", holdout))
+    sections.append(pii_section("[보너스] 개인정보 - 개발 테스트셋", dev))
+    if pii_holdout:
+        sections.append(pii_section("[보너스] 개인정보 - 홀드아웃 (패턴을 보지 않고 작성)", pii_holdout))
+    sections.append(masking_section(dev + holdout + pii_holdout))
     output = "\n\n".join(sections)
 
     print(output)

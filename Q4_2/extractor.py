@@ -120,12 +120,39 @@ def normalize_url(match: re.Match) -> str:
     return f"{scheme}://{host.lower()}{path}"
 
 
+def normalize_rrn(match: re.Match) -> str | None:
+    """YYMMDD-NNNNNNN. 뒷자리 첫 숫자로 세기를 정해 생년월일이 달력에 있는지 확인한다."""
+    birth, serial = match.group("birth"), match.group("serial")
+    century = 1900 if serial[0] in "1256" else 2000
+    try:
+        date(century + int(birth[:2]), int(birth[2:4]), int(birth[4:]))
+    except ValueError:
+        return None
+    return f"{birth}-{serial}"
+
+
+def normalize_card(match: re.Match) -> str:
+    """16자리는 4-4-4-4, AMEX 15자리는 4-6-5로 하이픈을 통일한다."""
+    groups = match.groupdict()
+    if groups.get("g1"):
+        return "-".join(groups[name] for name in ("g1", "g2", "g3", "g4"))
+    return "-".join(groups[name] for name in ("a1", "a2", "a3"))
+
+
+def normalize_address(match: re.Match) -> str:
+    """연속 공백을 한 칸으로 줄인다."""
+    return " ".join(match.group(0).split())
+
+
 NORMALIZERS = {
     EMAIL: normalize_email,
     PHONE: normalize_phone,
     DATE: normalize_date,
     MONEY: normalize_money,
     URL: normalize_url,
+    RRN: normalize_rrn,
+    CARD: normalize_card,
+    ADDRESS: normalize_address,
 }
 
 

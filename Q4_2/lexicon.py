@@ -118,7 +118,7 @@ def main() -> None:
         rows = build_candidates(tagger)
         CANDIDATES_PATH.parent.mkdir(parents=True, exist_ok=True)
         with CANDIDATES_PATH.open("w", encoding="utf-8", newline="") as file:
-            writer = csv.writer(file, delimiter="\t")
+            writer = csv.writer(file, delimiter="\t", lineterminator="\n")
             writer.writerow(["token", "pos", "neg_df", "pos_df", "log_odds"])
             writer.writerows((t, p, n, q, f"{lo:.3f}") for t, p, n, q, lo in rows)
         print(f"후보 {len(rows)}개 저장: {CANDIDATES_PATH}")

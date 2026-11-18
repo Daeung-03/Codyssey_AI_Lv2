@@ -43,6 +43,7 @@ Q4_2/
 ├── data/
 │   ├── extraction_testset.jsonl   # 생성기 출력 (Git 포함)
 │   ├── extraction_holdout.jsonl   # 패턴을 보지 않고 작성한 평가 문장 (Git 포함)
+│   ├── pii_holdout.jsonl          # [보너스] 개인정보 홀드아웃 (Git 포함)
 │   ├── sentiment_lexicon.tsv      # 범용 감성 사전 (Git 포함)
 │   ├── domain_lexicon.tsv         # 도메인 특화 단어 30개+ (Git 포함)
 │   ├── aspect_testset.jsonl       # [보너스] Aspect 정답 (Git 포함)
@@ -205,7 +206,7 @@ python main.py --text '...' --aspect    # 측면별 감성 함께 출력
 | 4 | NSMC 데이터 준비 + 감성 사전 구축 | `nsmc_data.py`, `lexicon.py`, `data/*_lexicon.tsv` | 사전 200개+, 도메인어 30개+, 출처 명시 | ✅ |
 | 5 | 감성 분석기 | `sentiment.py` | 부정어·강조어·이중부정 단일 패턴, trace 출력 | ✅ |
 | 6 | 감성 분석 평가 | `evaluate_sentiment.py`, `docs/sentiment_eval.log` | Acc/F1, 규칙 전후 비교, 오분류 10건+ 분석 | ✅ |
-| 7 | [보너스] 개인정보 마스킹 | `patterns.py` 확장, `masking.py` | 주민번호·카드·주소 추출 + 마스킹, PII 문장 평가 | ⬜ |
+| 7 | [보너스] 개인정보 마스킹 | `patterns.py` 확장, `masking.py`, `data/pii_holdout.jsonl` | 주민번호·카드·주소 추출 + 마스킹, PII 문장 평가 | ✅ |
 | 8 | [보너스] 규칙 vs TF-IDF | `compare_tfidf.py`, 로그·그래프 | 10/100/1000 학습 크기별 비교 | ⬜ |
 | 9 | [보너스] Aspect 감성 분석 | `aspect.py`, `data/aspect_testset.jsonl` | 측면별 극성 출력 + 정확도 | ⬜ |
 | 10 | 통합 CLI + 문서화 | `main.py`, `README.md`, `requirements.txt` | README 권장 목차 7절, 설치·실행 방법, 통계 vs 규칙 비교 서술 | ⬜ |
