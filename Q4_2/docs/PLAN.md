@@ -208,7 +208,7 @@ python main.py --text '...' --aspect    # 측면별 감성 함께 출력
 | 6 | 감성 분석 평가 | `evaluate_sentiment.py`, `docs/sentiment_eval.log` | Acc/F1, 규칙 전후 비교, 오분류 10건+ 분석 | ✅ |
 | 7 | [보너스] 개인정보 마스킹 | `patterns.py` 확장, `masking.py`, `data/pii_holdout.jsonl` | 주민번호·카드·주소 추출 + 마스킹, PII 문장 평가 | ✅ |
 | 8 | [보너스] 규칙 vs TF-IDF | `compare_tfidf.py`, 로그·그래프 | 10/100/1000 학습 크기별 비교 | ✅ |
-| 9 | [보너스] Aspect 감성 분석 | `aspect.py`, `data/aspect_testset.jsonl` | 측면별 극성 출력 + 정확도 | ⬜ |
+| 9 | [보너스] Aspect 감성 분석 | `aspect.py`, `data/aspect_testset.jsonl` | 측면별 극성 출력 + 정확도 | ✅ |
 | 10 | 통합 CLI + 문서화 | `main.py`, `README.md`, `requirements.txt` | README 권장 목차 7절, 설치·실행 방법, 통계 vs 규칙 비교 서술 | ⬜ |
 
 커밋은 Q4_1처럼 단계마다 `Q4_2: <작업 내용>` 형식으로 남긴다.

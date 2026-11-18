@@ -1,0 +1,36 @@
+{"id": "aspect-01", "domain": "restaurant", "text": "음식은 맛있는데 가격이 너무 비싸요", "aspects": {"음식": "긍정", "가격": "부정"}, "note": ""}
+{"id": "aspect-02", "domain": "restaurant", "text": "직원분들이 친절하지 않았어요. 불친절해서 기분만 상함", "aspects": {"서비스": "부정"}, "note": "negation plus explicit negative"}
+{"id": "aspect-03", "domain": "restaurant", "text": "분위기 좋고 음식도 맛있고 직원도 친절해요!", "aspects": {"분위기": "긍정", "음식": "긍정", "서비스": "긍정"}, "note": ""}
+{"id": "aspect-04", "domain": "restaurant", "text": "좀 비싸요 ㅠㅠ", "aspects": {"가격": "부정"}, "note": "aspect implied by predicate"}
+{"id": "aspect-05", "domain": "restaurant", "text": "진짜 맛있어요 또 올게요", "aspects": {"음식": "긍정"}, "note": "implied aspect"}
+{"id": "aspect-06", "domain": "restaurant", "text": "인테리어는 예쁜데 음식이 별로였어요", "aspects": {"분위기": "긍정", "음식": "부정"}, "note": ""}
+{"id": "aspect-07", "domain": "restaurant", "text": "가성비 최고입니다 양도 많고 저렴해요", "aspects": {"가격": "긍정"}, "note": ""}
+{"id": "aspect-08", "domain": "restaurant", "text": "음식이 너무 짜고 맛없었어요. 서비스도 엉망", "aspects": {"음식": "부정", "서비스": "부정"}, "note": ""}
+{"id": "aspect-09", "domain": "restaurant", "text": "분위기는 나쁘지 않았지만 가격 대비 음식 맛은 그냥 그랬음", "aspects": {"분위기": "긍정", "가격": "부정", "음식": "부정"}, "note": "나쁘지 않다 = mild positive; 그냥 그랬음 treated as mild negative"}
+{"id": "aspect-10", "domain": "restaurant", "text": "사장님 완전 친절하시고 가격도 착해요~", "aspects": {"서비스": "긍정", "가격": "긍정"}, "note": "착하다 for price"}
+{"id": "aspect-11", "domain": "restaurant", "text": "시끄럽고 정신없어서 분위기는 별로. 근데 맛은 인정!", "aspects": {"분위기": "부정", "음식": "긍정"}, "note": "맛 implied food"}
+{"id": "aspect-12", "domain": "restaurant", "text": "직원 응대가 정말 빠르고 친절했고 음식도 깔끔하고 맛있었습니다", "aspects": {"서비스": "긍정", "음식": "긍정"}, "note": ""}
+{"id": "aspect-13", "domain": "shopping", "text": "배송은 빠른데 포장이 엉망이라 별로예요", "aspects": {"배송": "긍정"}, "note": "speed positive, packaging negative; both under 배송, gold uses positive overall - ambiguous"}
+{"id": "aspect-14", "domain": "shopping", "text": "배송 진짜 빨라요! 하루만에 왔어요", "aspects": {"배송": "긍정"}, "note": ""}
+{"id": "aspect-15", "domain": "shopping", "text": "배송이 너무 느려서 답답했어요", "aspects": {"배송": "부정"}, "note": ""}
+{"id": "aspect-16", "domain": "shopping", "text": "가격 저렴하고 배송도 빨라서 만족합니다", "aspects": {"가격": "긍정", "배송": "긍정"}, "note": ""}
+{"id": "aspect-17", "domain": "shopping", "text": "상담원 응대가 불친절하고 환불도 안 해줘요. 가격은 싼데 이럴 거면 안 산다", "aspects": {"서비스": "부정", "가격": "긍정"}, "note": "price positive despite overall anger"}
+{"id": "aspect-18", "domain": "shopping", "text": "포장이 꼼꼼해서 하나도 안 깨졌어요", "aspects": {"배송": "긍정"}, "note": "packaging = 배송; negation inside positive"}
+{"id": "aspect-19", "domain": "shopping", "text": "너무 비싸요. 이 가격이면 다른 데가 낫겠어요", "aspects": {"가격": "부정"}, "note": ""}
+{"id": "aspect-20", "domain": "shopping", "text": "판매자분 친절하시고 문의 답변도 빨라요", "aspects": {"서비스": "긍정"}, "note": "빨라요 here refers to service"}
+{"id": "aspect-21", "domain": "shopping", "text": "배송은 느리지 않았어요 근데 포장 상태가 안 좋았음", "aspects": {"배송": "부정"}, "note": "negated negative then packaging negative; unsure"}
+{"id": "aspect-22", "domain": "shopping", "text": "가격 대비 정말 훌륭하고 서비스도 만족스러워요", "aspects": {"가격": "긍정", "서비스": "긍정"}, "note": ""}
+{"id": "aspect-23", "domain": "shopping", "text": "택배가 며칠이나 늦게 왔고 고객센터는 연결도 안 됨 ㅡㅡ", "aspects": {"배송": "부정", "서비스": "부정"}, "note": "고객센터 not connecting = service negative"}
+{"id": "aspect-24", "domain": "shopping", "text": "싸게 잘 샀어요 빠른배송 감사합니다", "aspects": {"가격": "긍정", "배송": "긍정"}, "note": "colloquial spacing"}
+{"id": "aspect-25", "domain": "movie", "text": "스토리는 탄탄한데 연기가 어색해서 몰입이 안 됐다", "aspects": {"스토리": "긍정", "연기": "부정"}, "note": ""}
+{"id": "aspect-26", "domain": "movie", "text": "영상미 대박... CG도 진짜 자연스럽고 음악도 소름", "aspects": {"영상": "긍정", "음악": "긍정"}, "note": ""}
+{"id": "aspect-27", "domain": "movie", "text": "배우들 연기가 너무 좋았어요 특히 주연 연기 최고", "aspects": {"연기": "긍정"}, "note": ""}
+{"id": "aspect-28", "domain": "movie", "text": "결말이 허무하고 스토리도 뻔해요", "aspects": {"스토리": "부정"}, "note": ""}
+{"id": "aspect-29", "domain": "movie", "text": "OST가 영화랑 너무 잘 어울려서 계속 듣는 중", "aspects": {"음악": "긍정"}, "note": "OST"}
+{"id": "aspect-30", "domain": "movie", "text": "영상은 화려한데 스토리가 없어요. 볼거리만 많음", "aspects": {"영상": "긍정", "스토리": "부정"}, "note": ""}
+{"id": "aspect-31", "domain": "movie", "text": "연기도 별로고 음악도 거슬리고 CG는 조잡했다", "aspects": {"연기": "부정", "음악": "부정", "영상": "부정"}, "note": ""}
+{"id": "aspect-32", "domain": "movie", "text": "스토리가 재미없진 않았어요. 반전이 신선했음", "aspects": {"스토리": "긍정"}, "note": "negated negative = mild positive"}
+{"id": "aspect-33", "domain": "movie", "text": "연기력 논란 있었는데 보니까 훌륭하던데요?", "aspects": {"연기": "긍정"}, "note": "negative context word then positive verdict; unsure"}
+{"id": "aspect-34", "domain": "movie", "text": "화면이 너무 어두워서 답답했고 배경음악이 시끄러웠어요", "aspects": {"영상": "부정", "음악": "부정"}, "note": "화면 = visuals"}
+{"id": "aspect-35", "domain": "movie", "text": "감동적인 스토리에 아름다운 영상까지 완벽한 영화", "aspects": {"스토리": "긍정", "영상": "긍정"}, "note": ""}
+{"id": "aspect-36", "domain": "movie", "text": "배우 연기는 그럭저럭인데 음악이 정말 좋아서 눈물남ㅠㅠ", "aspects": {"연기": "부정", "음악": "긍정"}, "note": "그럭저럭 = lukewarm, labeled negative; unsure"}
